@@ -1,1 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Homework Tracker</title>
 
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 750px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input, select {
+            padding: 10px;
+            margin: 6px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 10px 16px;
+            margin: 6px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .today {
+            background: #eee;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .reminder {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .overdue {
+            border-left: 6px solid red;
+        }
+
+        .high {
+            border-left: 6px solid orange;
+        }
+
+        .done {
+            opacity: 0.6;
+        }
+
+        .done h3 {
+            text-decoration: line-through;
+        }
+
+        .homework {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <h1>📝 Homework Tracker</h1>
+
+    <div class="today">
+        📅 Today: <span id="todayDate"></span>
+    </div>
+
+    <div id="reminder" class="reminder" style="display:none;"></div>
+
+    <div class="stats">
+        <div>📌 Total: <span id="total">0</span></div>
+        <div>⏳ Pending: <span id="pending">0</span></div>
+        <div>✅ Done: <span id="completed">0</span></div>
+    </div>
+
+    <hr>
+
+    <h2>➕ Add Homework</h2>
+
+    <select id="subject">
+        <option value="">📚 Select Subject</option>
+        <option value="English">English</option>
+        <option value="Marathi">Marathi</option>
+        <option value="Hindi">Hindi</option>
+        <option value="Maths">Maths</option>
+        <option value="Science">Science</option>
+        <option value="Social Science">Social Science</option>
+        <option value="Computer">Computer</option>
+        <option value="Foreign Language">Foreign Language</option>
+        <option value="GK">GK</option>
+        <option value="Drawing">Drawing</option>
+        <option value="Other">Other</option>
+    </select>
+
+    <input type="text" id="homework" placeholder="📝 Homework">
+
+    <br>
+
+    <label>📅 Due Date:</label>
+    <input type="date" id="dueDate">
+
+    <select id="priority">
+        <option value="Low">🟢 Low</option>
+        <option value="Medium">🟡 Medium</option>
+        <option value="High">🔴 High</option>
+    </select>
+
+    <br>
+
+    <button onclick="addHomework()">➕ Add Homework</button>
+
+    <hr>
+
+    <h2>📋 My Homework</h2>
+
+    <div id="homeworkList"></div>
+
+</div>
+
+<script>
+
+let homeworkList = JSON.parse(localStorage.getItem("homeworkList")) || [];
+
+function showToday() {
+
+    let today = new Date();
+
+    let options = {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    };
+
+    document.getElementById("todayDate").innerText =
+        today.toLocaleDateString("en-IN", options);
+}
+
+function saveHomework() {
+    localStorage.setItem(
+        "homeworkList",
+        JSON.stringify(homeworkList)
+    );
+}
+
+function addHomework() {
+
+    let subject =
+        document.getElementById("subject").value;
+
+    let homework =
+        document.getElementById("homework").value.trim();
+
+    let dueDate =
+        document.getElementById("dueDate").value;
+
+    let priority =
+        document.getElementById("priority").value;
+
+    if (subject === "" || homework === "") {
+        alert("Please select Subject and enter Homework!");
+        return;
+    }
+
+    homeworkList.push({
+        subject: subject,
+        homework: homework,
+        dueDate: dueDate,
+        priority: priority,
+        completed: false
+    });
+
+    saveHomework();
+
+    document.getElementById("subject").value = "";
+    document.getElementById("homework").value = "";
+    document.getElementById("dueDate").value = "";
+
+    displayHomework();
+}
+
+function displayHomework() {
+
+    let list =
+        document.getElementById("homeworkList");
+
+    list.innerHTML = "";
+
+    homeworkList.forEach(function(item, index) {
+
+        let card =
+            document.createElement("div");
+
+        let today =
+            new Date().toISOString().split("T")[0];
+
+        let isOverdue =
+            item.dueDate &&
+            item.dueDate < today &&
+            !item.completed;
+
+        card.className = "homework";
+
+        if (item.completed) {
+            card.classList.add("done");
+        }
+        else if (isOverdue) {
+            card.classList.add("overdue");
+        }
+        else if (item.priority === "High") {
+            card.classList.add("high");
+        }
+
+        let status = "";
+
+        if (item.completed) {
+            status = "✅ Completed";
+        }
+        else if (isOverdue) {
+            status = "⚠️ OVERDUE";
+        }
+        else if (item.dueDate === today) {
+            status = "🔔 Due Today";
+        }
+        else if (item.priority === "High") {
+            status = "🔴 High Priority";
+        }
+        else {
+            status = "⏳ Pending";
+        }
+
+        card.innerHTML = `
+            <h3>📚 ${item.subject}</h3>
+
+            <p>📝 ${item.homework}</p>
+
+            <p>📅 Due: ${item.dueDate || "No date"}</p>
+
+            <p>⭐ Priority: ${item.priority}</p>
+
+            <p><b>${status}</b></p>
+
+            <button onclick="markDone(${index})">
+                ${item.completed ? "↩️ Undo" : "✅ Mark Done"}
+            </button>
+
+            <button onclick="deleteHomework(${index})">
+                🗑️ Delete
+            </button>
+        `;
+
+        list.appendChild(card);
+
+    });
+
+    updateStats();
+    updateReminder();
+}
+
+function markDone(index) {
+
+    homeworkList[index].completed =
+        !homeworkList[index].completed;
+
+    saveHomework();
+    displayHomework();
+}
+
+function deleteHomework(index) {
+
+    homeworkList.splice(index, 1);
+
+    saveHomework();
+    displayHomework();
+}
+
+function updateStats() {
+
+    let total =
+        homeworkList.length;
+
+    let completed =
+        homeworkList.filter(
+            item => item.completed
+        ).length;
+
+    let pending =
+        total - completed;
+
+    document.getElementById("total").innerText =
+        total;
+
+    document.getElementById("pending").innerText =
+        pending;
+
+    document.getElementById("completed").innerText =
+        completed;
+}
+
+function updateReminder() {
+
+    let today =
+        new Date().toISOString().split("T")[0];
+
+    let pendingToday =
+        homeworkList.filter(function(item) {
+
+            return !item.completed &&
+                (
+                    item.dueDate === today ||
+                    (item.priority === "High" &&
+                     item.dueDate &&
+                     item.dueDate < today)
+                );
+
+        });
+
+    let reminder =
+        document.getElementById("reminder");
+
+    if (pendingToday.length > 0) {
+
+        reminder.style.display = "block";
+
+        reminder.innerHTML =
+            "🔔 Reminder: You have " +
+            pendingToday.length +
+            " important homework(s) pending!";
+
+    }
+    else {
+        reminder.style.display = "none";
+    }
+}
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+        navigator.serviceWorker.register("sw.js")
+            .then(function() {
+                console.log("Service Worker registered!");
+            })
+            .catch(function(error) {
+                console.log("Service Worker error:", error);
+            });
+    });
+}
+
+showToday();
+displayHomework();
+
+</script>
+
+</body>
+</html>
