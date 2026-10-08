@@ -151,7 +151,9 @@
 </div>
 
 <script>
-
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
 let homeworkList = JSON.parse(localStorage.getItem("homeworkList")) || [];
 
 function showToday() {
